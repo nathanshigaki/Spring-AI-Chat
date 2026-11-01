@@ -151,7 +151,7 @@
             }
         }
 
-        /* Chat & Voice Section */
+        /* Chat Section */
         .chat-container {
             background: var(--surface);
             border: 1px solid var(--border);
@@ -191,7 +191,7 @@
         }
 
         .message {
-            max-width: 82%;
+            max-width: 85%;
             padding: 0.875rem 1.125rem;
             border-radius: 14px;
             font-size: 0.9375rem;
@@ -238,18 +238,18 @@
         }
 
         .mic-btn {
-            width: 68px;
-            height: 68px;
+            width: 70px;
+            height: 70px;
             border-radius: 50%;
             border: none;
             background: linear-gradient(135deg, #6366f1, #8b5cf6);
             color: white;
-            font-size: 1.75rem;
+            font-size: 1.85rem;
             cursor: pointer;
             display: flex;
             justify-content: center;
             align-items: center;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.25s ease;
             box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
             z-index: 2;
         }
@@ -259,15 +259,15 @@
             box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
         }
 
-        .mic-btn.listening {
+        .mic-btn.recording {
             background: linear-gradient(135deg, #ef4444, #f43f5e);
             box-shadow: 0 0 25px rgba(239, 68, 68, 0.8);
-            animation: pulse-mic 1.5s infinite;
+            animation: pulse-mic 1.2s infinite;
         }
 
         @keyframes pulse-mic {
             0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-            70% { transform: scale(1.08); box-shadow: 0 0 0 18px rgba(239, 68, 68, 0); }
+            70% { transform: scale(1.08); box-shadow: 0 0 0 16px rgba(239, 68, 68, 0); }
             100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
 
@@ -278,9 +278,9 @@
             text-align: center;
         }
 
-        .mic-label.listening {
+        .mic-label.recording {
             color: var(--danger);
-            font-weight: 600;
+            font-weight: 700;
         }
 
         .input-row {
@@ -428,11 +428,11 @@
 
     <header>
         <div class="brand">
-            <span>🎙️ Smart Budgeting AI</span>
+            <span>💰 Smart Budgeting AI</span>
             <span class="brand-badge">Spring AI + Clean Arch</span>
         </div>
         <div class="header-actions">
-            <span style="font-size: 0.875rem; color: var(--text-muted);"><span class="status-dot"></span>Groq Llama 3.3 Conectado</span>
+            <span style="font-size: 0.875rem; color: var(--text-muted);"><span class="status-dot"></span>Conectado</span>
             <a href="/swagger-ui.html" target="_blank" class="btn-link">Swagger Docs ↗</a>
         </div>
     </header>
@@ -464,14 +464,13 @@
             <section class="chat-container">
                 <div class="chat-header">
                     <span style="font-weight: 600; font-size: 0.9375rem;">Assistente Conversacional</span>
-                    <button id="toggle-voice-btn" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.8125rem;">
-                        🔊 Voz da IA: <strong id="voice-status" style="color:var(--success);">Ativada</strong>
-                    </button>
+                    <span style="font-size:0.75rem; color:var(--text-muted);">Comando por Voz ou Texto</span>
                 </div>
 
                 <div class="chat-messages" id="chat-messages">
                     <div class="message assistant">
-                        Olá! Sou o seu Assistente Financeiro Inteligente. Você pode clicar no microfone abaixo e falar comandos como:<br><br>
+                        Olá! Sou o seu Assistente Financeiro Inteligente.<br>
+                        Você pode falar pelo microfone ou digitar comandos como:<br><br>
                         • <em>"Recebi 4.500 reais de salário hoje"</em><br>
                         • <em>"Gastei 55 reais no mercado com frutas"</em><br>
                         • <em>"Quanto me resta de saldo agora?"</em>
@@ -480,14 +479,14 @@
 
                 <div class="voice-control-center">
                     <div class="mic-button-wrapper">
-                        <button class="mic-btn" id="mic-btn" title="Clique e fale com a IA">
+                        <button class="mic-btn" id="mic-btn" title="Clique para falar com a IA">
                             🎙️
                         </button>
                     </div>
-                    <span class="mic-label" id="mic-label">Clique no microfone e fale naturalmente</span>
+                    <span class="mic-label" id="mic-label">Clique no microfone e fale seu comando</span>
 
                     <form class="input-row" id="chat-form">
-                        <input type="text" id="text-input" class="input-box" placeholder="Ou digite seu comando financeiro aqui..." autocomplete="off">
+                        <input type="text" id="text-input" class="input-box" placeholder="Ou digite sua transação aqui e aperte Enter..." autocomplete="off">
                         <button type="submit" class="btn-send">Enviar</button>
                     </form>
                 </div>
@@ -511,82 +510,107 @@
 
     <script>
         const conversationId = "sessao-web-" + Math.random().toString(36).substring(2, 9);
-        let voiceEnabled = true;
 
         const micBtn = document.getElementById('mic-btn');
         const micLabel = document.getElementById('mic-label');
         const chatForm = document.getElementById('chat-form');
         const textInput = document.getElementById('text-input');
         const chatMessages = document.getElementById('chat-messages');
-        const toggleVoiceBtn = document.getElementById('toggle-voice-btn');
-        const voiceStatus = document.getElementById('voice-status');
 
-        // Toggle Voice TTS
-        toggleVoiceBtn.addEventListener('click', () => {
-            voiceEnabled = !voiceEnabled;
-            voiceStatus.textContent = voiceEnabled ? "Ativada" : "Silenciada";
-            voiceStatus.style.color = voiceEnabled ? "var(--success)" : "var(--danger)";
-            if (!voiceEnabled && window.speechSynthesis) {
-                window.speechSynthesis.cancel();
+        // Robust HTML5 MediaRecorder (Funciona em 100% dos navegadores: Chrome, Edge, Brave, Firefox, Safari)
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isRecording = false;
+
+        micBtn.addEventListener('click', async () => {
+            if (isRecording) {
+                stopRecording();
+            } else {
+                startRecording();
             }
         });
 
-        // Speech Recognition Setup (Web Speech API - Native & Free)
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        let recognition = null;
-        let isListening = false;
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
 
-        if (SpeechRecognition) {
-            recognition = new SpeechRecognition();
-            recognition.lang = 'pt-BR';
-            recognition.continuous = false;
-            recognition.interimResults = false;
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
 
-            recognition.onstart = () => {
-                isListening = true;
-                micBtn.classList.add('listening');
-                micLabel.classList.add('listening');
-                micLabel.textContent = "Ouvindo você... Fale agora!";
-            };
+                mediaRecorder.onstop = async () => {
+                    stream.getTracks().forEach(track => track.stop());
+                    if (audioChunks.length > 0) {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        sendVoiceAudio(audioBlob);
+                    }
+                };
 
-            recognition.onresult = (event) => {
-                const transcript = event.results[0][0].transcript;
-                if (transcript && transcript.trim().length > 0) {
-                    sendMessage(transcript.trim());
-                }
-            };
+                mediaRecorder.start();
+                isRecording = true;
+                micBtn.classList.add('recording');
+                micLabel.classList.add('recording');
+                micLabel.textContent = "🔴 Gravando... Fale e clique no microfone para enviar";
 
-            recognition.onerror = (event) => {
-                console.error("Speech recognition error:", event.error);
-                stopListening();
-                micLabel.textContent = "Não entendi, tente falar novamente.";
-            };
-
-            recognition.onend = () => {
-                stopListening();
-            };
-
-            micBtn.addEventListener('click', () => {
-                if (isListening) {
-                    recognition.stop();
-                } else {
-                    recognition.start();
-                }
-            });
-        } else {
-            micBtn.style.opacity = "0.5";
-            micBtn.title = "Reconhecimento de voz não suportado neste navegador. Use o Chrome ou Edge.";
-            micLabel.textContent = "Microfone suportado no Google Chrome ou Microsoft Edge";
+            } catch (err) {
+                console.error("Erro ao acessar microfone:", err);
+                micLabel.textContent = "⚠️ Permissão do microfone negada. Permita o microfone no navegador.";
+            }
         }
 
-        function stopListening() {
-            isListening = false;
-            micBtn.classList.remove('listening');
-            micLabel.classList.remove('listening');
-            micLabel.textContent = "Clique no microfone e fale naturalmente";
+        function stopRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                isRecording = false;
+                micBtn.classList.remove('recording');
+                micLabel.classList.remove('recording');
+                micLabel.textContent = "Processando áudio com a IA...";
+            }
         }
 
-        // Send Text/Voice Message to Assistant
+        async function sendVoiceAudio(blob) {
+            const loadingId = appendMessage('assistant', 'Processando seu comando de voz...');
+            scrollToBottom();
+
+            try {
+                const formData = new FormData();
+                formData.append('file', blob, 'audio.webm');
+                formData.append('conversationId', conversationId);
+
+                const response = await fetch('/api/v1/assistant/voice', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error("Erro na transcrição/processamento");
+                const data = await response.json();
+
+                // Mostra o que a pessoa falou
+                if (data.transcription) {
+                    appendMessage('user', data.transcription);
+                }
+
+                // Mostra a resposta da IA em texto
+                updateMessage(loadingId, data.response);
+                scrollToBottom();
+
+                micLabel.textContent = "Clique no microfone e fale seu comando";
+
+                // Atualiza os dados na tela
+                refreshData();
+
+            } catch (err) {
+                updateMessage(loadingId, "Desculpe, ocorreu um erro ao processar o áudio. Tente novamente ou use o campo de texto.");
+                micLabel.textContent = "Clique no microfone e fale seu comando";
+                console.error(err);
+            }
+        }
+
+        // Envio via formulário de texto
         chatForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const message = textInput.value.trim();
@@ -600,7 +624,7 @@
             appendMessage('user', text);
             scrollToBottom();
 
-            const loadingId = appendMessage('assistant', 'Pensando e processando...');
+            const loadingId = appendMessage('assistant', 'Processando...');
             scrollToBottom();
 
             try {
@@ -616,11 +640,6 @@
                 updateMessage(loadingId, data.response);
                 scrollToBottom();
 
-                // Falar a resposta da IA em voz alta
-                if (voiceEnabled) {
-                    speakResponse(data.response);
-                }
-
                 // Atualizar dados e balanço na tela
                 refreshData();
 
@@ -630,24 +649,8 @@
             }
         }
 
-        function speakResponse(text) {
-            if (!('speechSynthesis' in window)) return;
-            window.speechSynthesis.cancel();
-
-            const cleanText = text.replace(/[*_#`]/g, '');
-            const utterance = new SpeechSynthesisUtterance(cleanText);
-            utterance.lang = 'pt-BR';
-            utterance.rate = 1.05;
-
-            const voices = window.speechSynthesis.getVoices();
-            const ptVoice = voices.find(v => v.lang.startsWith('pt'));
-            if (ptVoice) utterance.voice = ptVoice;
-
-            window.speechSynthesis.speak(utterance);
-        }
-
         function appendMessage(role, text) {
-            const id = 'msg-' + Date.now();
+            const id = 'msg-' + Date.now() + Math.random().toString(36).substring(2, 5);
             const div = document.createElement('div');
             div.className = `message ${role}`;
             div.id = id;

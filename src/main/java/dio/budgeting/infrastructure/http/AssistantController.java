@@ -3,6 +3,7 @@ package dio.budgeting.infrastructure.http;
 import dio.budgeting.infrastructure.config.SpringAiConfig;
 import dio.budgeting.infrastructure.http.dto.ChatMessageRequest;
 import dio.budgeting.infrastructure.http.dto.ChatMessageResponse;
+import dio.budgeting.infrastructure.http.dto.VoiceMessageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -53,6 +54,27 @@ public class AssistantController {
                 .content();
 
         return new ChatMessageResponse(response, convId);
+    }
+
+    @PostMapping(value = "/voice", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Comando de voz direto (Microfone Web)", description = "Recebe áudio gravado diretamente do microfone, transcreve com Whisper e devolve resposta em texto sem fala sonora.")
+    public VoiceMessageResponse voice(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "conversationId", required = false) String conversationId
+    ) {
+        String convId = (conversationId != null && !conversationId.isBlank())
+                ? conversationId
+                : UUID.randomUUID().toString();
+
+        String transcription = transcriptionModel.transcribe(file.getResource());
+
+        String result = chatClient.prompt()
+                .user(transcription)
+                .advisors(advisorSpec -> advisorSpec.param(SpringAiConfig.CHAT_MEMORY_CONVERSATION_ID, convId))
+                .call()
+                .content();
+
+        return new VoiceMessageResponse(transcription, result, convId);
     }
 
     @PostMapping(value = "/audio", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = "audio/mp3")
