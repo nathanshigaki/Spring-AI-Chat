@@ -40,3 +40,8 @@ nbdist/
 ### Windows ###
 Thumbs.db
 Desktop.ini
+
+### Environment Variables ###
+.env
+.env.local
+

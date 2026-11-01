@@ -69,16 +69,18 @@ docker compose up -d
 ```
 > O MySQL será iniciado na porta `3307` com o banco `transaction`.
 
-### Passo 2: Configurar a variável de ambiente
-No Linux/macOS:
+### Passo 2: Configurar a Chave no arquivo `.env`
+Copie o modelo de configuração para o seu arquivo `.env`:
 ```bash
-export GROQ_API_KEY="gsk_sua_chave_aqui"
+cp .env.example .env
 ```
+*(No Windows PowerShell: `Copy-Item .env.example .env`)*
 
-No Windows (PowerShell):
-```powershell
-$env:GROQ_API_KEY="gsk_sua_chave_aqui"
+Abra o arquivo `.env` e cole sua chave:
+```env
+GROQ_API_KEY=gsk_sua_chave_aqui
 ```
+*(Alternativamente, você também pode exportar como variável de ambiente no terminal: `$env:GROQ_API_KEY="gsk_..."`).*
 
 ### Passo 3: Executar a aplicação
 No Windows:
