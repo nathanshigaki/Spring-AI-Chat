@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --bg: #090d16;
@@ -141,8 +142,7 @@
             display: grid;
             grid-template-columns: 1fr 1.1fr;
             gap: 1.5rem;
-            flex: 1;
-            min-height: 580px;
+            min-height: 520px;
         }
 
         @media (max-width: 960px) {
@@ -187,7 +187,7 @@
             display: flex;
             flex-direction: column;
             gap: 1rem;
-            max-height: 440px;
+            max-height: 400px;
         }
 
         .message {
@@ -347,7 +347,7 @@
             display: flex;
             flex-direction: column;
             gap: 0.75rem;
-            max-height: 560px;
+            max-height: 480px;
         }
 
         .tx-item {
@@ -422,6 +422,55 @@
             color: var(--text-muted);
             font-size: 0.875rem;
         }
+
+        /* Full Width Charts Row */
+        .charts-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            width: 100%;
+        }
+
+        @media (max-width: 900px) {
+            .charts-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            min-height: 340px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chart-title {
+            font-weight: 700;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-body {
+            position: relative;
+            flex: 1;
+            min-height: 250px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
     </style>
 </head>
 <body>
@@ -458,7 +507,7 @@
             </div>
         </section>
 
-        <!-- Workspace Split -->
+        <!-- Workspace Split (Chat & Transactions) -->
         <div class="workspace-split">
             <!-- Left: Voice & Chat Assistant -->
             <section class="chat-container">
@@ -506,6 +555,31 @@
                 </div>
             </section>
         </div>
+
+        <!-- Full Width Charts Row Below Chat -->
+        <section class="charts-row">
+            <!-- Chart 1: Expenses by Category (Donut) -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <span class="chart-title">🍩 Despesas por Categoria</span>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);" id="category-chart-subtitle">0 categorias</span>
+                </div>
+                <div class="chart-body">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Chart 2: Cash Flow (Income vs Expense Bars) -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <span class="chart-title">📊 Fluxo de Caixa (Receitas vs Despesas)</span>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">Comparativo</span>
+                </div>
+                <div class="chart-body">
+                    <canvas id="flowChart"></canvas>
+                </div>
+            </div>
+        </section>
     </main>
 
     <script>
@@ -517,7 +591,18 @@
         const textInput = document.getElementById('text-input');
         const chatMessages = document.getElementById('chat-messages');
 
-        // Robust HTML5 MediaRecorder (Funciona em 100% dos navegadores: Chrome, Edge, Brave, Firefox, Safari)
+        // Charts Instances
+        let categoryChartInstance = null;
+        let flowChartInstance = null;
+
+        // Palette for Category Donut
+        const categoryPalette = [
+            '#6366f1', '#10b981', '#f59e0b', '#ef4444', 
+            '#ec4899', '#8b5cf6', '#06b6d4', '#14b8a6', 
+            '#f97316', '#a855f7', '#64748b'
+        ];
+
+        // MediaRecorder for Mic
         let mediaRecorder = null;
         let audioChunks = [];
         let isRecording = false;
@@ -589,18 +674,14 @@
                 if (!response.ok) throw new Error("Erro na transcrição/processamento");
                 const data = await response.json();
 
-                // Mostra o que a pessoa falou
                 if (data.transcription) {
                     appendMessage('user', data.transcription);
                 }
 
-                // Mostra a resposta da IA em texto
                 updateMessage(loadingId, data.response);
                 scrollToBottom();
 
                 micLabel.textContent = "Clique no microfone e fale seu comando";
-
-                // Atualiza os dados na tela
                 refreshData();
 
             } catch (err) {
@@ -610,7 +691,6 @@
             }
         }
 
-        // Envio via formulário de texto
         chatForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const message = textInput.value.trim();
@@ -640,7 +720,6 @@
                 updateMessage(loadingId, data.response);
                 scrollToBottom();
 
-                // Atualizar dados e balanço na tela
                 refreshData();
 
             } catch (err) {
@@ -668,7 +747,7 @@
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
-        // Fetch Metrics & Transactions
+        // Fetch Metrics, Transactions & Update Charts
         async function refreshData() {
             try {
                 const [summaryRes, txRes] = await Promise.all([
@@ -685,6 +764,9 @@
                     document.getElementById('metric-income').textContent = formatCurrency(s.totalIncome || 0);
                     document.getElementById('metric-expense').textContent = formatCurrency(s.totalExpense || 0);
                     document.getElementById('metric-count').textContent = s.totalTransactions || 0;
+
+                    // Update Charts
+                    updateCharts(s);
                 }
 
                 if (txRes.ok) {
@@ -693,6 +775,133 @@
                 }
             } catch (e) {
                 console.error("Erro ao atualizar métricas:", e);
+            }
+        }
+
+        function updateCharts(summary) {
+            const expensesByCategory = summary.expensesByCategory || {};
+            const categories = Object.keys(expensesByCategory);
+            const amounts = Object.values(expensesByCategory);
+
+            document.getElementById('category-chart-subtitle').textContent = 
+                `${categories.length} categoria${categories.length === 1 ? '' : 's'}`;
+
+            // 1. Donut Chart: Expenses by Category
+            const ctxCat = document.getElementById('categoryChart').getContext('2d');
+            
+            const catLabels = categories.length > 0 ? categories : ['Sem despesas'];
+            const catData = amounts.length > 0 ? amounts : [1];
+            const catColors = amounts.length > 0 
+                ? categoryPalette.slice(0, categories.length)
+                : ['#1e293b'];
+
+            if (categoryChartInstance) {
+                categoryChartInstance.data.labels = catLabels;
+                categoryChartInstance.data.datasets[0].data = catData;
+                categoryChartInstance.data.datasets[0].backgroundColor = catColors;
+                categoryChartInstance.update();
+            } else {
+                categoryChartInstance = new Chart(ctxCat, {
+                    type: 'doughnut',
+                    data: {
+                        labels: catLabels,
+                        datasets: [{
+                            data: catData,
+                            backgroundColor: catColors,
+                            borderWidth: 2,
+                            borderColor: '#111827'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '70%',
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                labels: {
+                                    color: '#cbd5e1',
+                                    font: { family: 'Plus Jakarta Sans', size: 12 },
+                                    boxWidth: 14,
+                                    padding: 12
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        if (categories.length === 0) return ' Nenhuma despesa registrada';
+                                        const val = context.raw || 0;
+                                        return ` ${context.label}: ${formatCurrency(val)}`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 2. Bar Chart: Cash Flow (Income vs Expense)
+            const ctxFlow = document.getElementById('flowChart').getContext('2d');
+            const totalIncome = summary.totalIncome || 0;
+            const totalExpense = summary.totalExpense || 0;
+
+            if (flowChartInstance) {
+                flowChartInstance.data.datasets[0].data = [totalIncome, totalExpense];
+                flowChartInstance.update();
+            } else {
+                flowChartInstance = new Chart(ctxFlow, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Total Receitas', 'Total Despesas'],
+                        datasets: [{
+                            data: [totalIncome, totalExpense],
+                            backgroundColor: [
+                                'rgba(16, 185, 129, 0.85)',
+                                'rgba(239, 68, 68, 0.85)'
+                            ],
+                            borderColor: [
+                                '#10b981',
+                                '#ef4444'
+                            ],
+                            borderWidth: 1.5,
+                            borderRadius: 8,
+                            maxBarThickness: 60
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return ` ${formatCurrency(context.raw)}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { display: false },
+                                ticks: {
+                                    color: '#cbd5e1',
+                                    font: { family: 'Plus Jakarta Sans', size: 12, weight: '600' }
+                                }
+                            },
+                            y: {
+                                grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                                ticks: {
+                                    color: '#9ca3af',
+                                    font: { family: 'Plus Jakarta Sans', size: 11 },
+                                    callback: function(val) {
+                                        return 'R$ ' + val;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
             }
         }
 

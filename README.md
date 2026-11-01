@@ -51,6 +51,7 @@ Partindo do projeto inicial do expert Poiani, as seguintes melhorias foram desen
 | **Ferramentas de IA (@Tool)** | Apenas 2 (salvar e listar categoria) | **4 Ferramentas:** Registro inteligente, Balanço consolidado (`get-financial-summary`), Listagem com filtros e Estorno/Remoção (`delete-transaction`) |
 | **Memória Contextual** | Sem memória entre requisições | **Persistência no MySQL:** Histórico gravado em banco com `JpaChatMemoryRepository` |
 | **Interface de Usuário** | Nenhuma (somente endpoints) | **Dashboard Web Completo** com saldo, receitas, despesas e chat com voz |
+| **Visualização de Dados** | Sem gráficos visuais | **Gráficos Analíticos Dinâmicos:** Donut de Despesas por Categoria e Barras de Fluxo de Caixa (Chart.js) |
 | **Custo de Execução** | Exigia créditos pagos da OpenAI | **100% Gratuito:** Groq API sem custo + Web Speech nativo |
 | **Perfil Standalone/Demo** | Sem fallback offline | Perfil `@Profile("demo")` para rodar sem chaves externas em apresentações |
 
