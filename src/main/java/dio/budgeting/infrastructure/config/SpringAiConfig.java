@@ -4,10 +4,10 @@ import dio.budgeting.application.usecase.DeleteTransactionUseCase;
 import dio.budgeting.application.usecase.GetFinancialSummaryUseCase;
 import dio.budgeting.application.usecase.ListTransactionsUseCase;
 import dio.budgeting.application.usecase.RegisterTransactionUseCase;
+import dio.budgeting.infrastructure.persistence.repository.JpaChatMemoryRepository;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.ai.chat.memory.InMemoryChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -23,9 +23,9 @@ public class SpringAiConfig {
     public static final String CHAT_MEMORY_CONVERSATION_ID = "chat_memory_conversation_id";
 
     @Bean
-    public ChatMemory chatMemory() {
+    public ChatMemory chatMemory(JpaChatMemoryRepository jpaChatMemoryRepository) {
         return MessageWindowChatMemory.builder()
-                .chatMemoryRepository(new InMemoryChatMemoryRepository())
+                .chatMemoryRepository(jpaChatMemoryRepository)
                 .maxMessages(20)
                 .build();
     }
