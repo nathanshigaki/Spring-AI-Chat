@@ -19,7 +19,7 @@ A **Smart Budgeting API** é um assistente financeiro pessoal inteligente que pe
 2. **Compreensão e Orquestração (LLM):** O modelo **Llama 3.3 70B** analisa a intenção, identifica se é uma receita ou despesa, infere a categoria adequada e decide qual função da aplicação deve ser acionada.
 3. **Execução de Função Real (Tool Calling):** A IA não inventa dados; ela executa casos de uso reais da aplicação (`@Tool`) para persistir, consultar balanços ou realizar estornos no banco de dados MySQL.
 4. **Memória de Conversação Persistente no MySQL:** O assistente retém o histórico da sessão gravado em banco de dados (`chat_messages`), permitindo perguntas encadeadas (ex.: *"Quanto me resta de saldo agora?"*).
-5. **Resposta em Voz Alta:** O sistema exibe o resultado na tela, atualiza o saldo e as métricas em tempo real, e **fala a resposta em voz alta** em português brasileiro.
+5. **Resposta em Tempo Real:** O assistente exibe a confirmação textual na tela, atualiza o saldo, os gráficos analíticos e as métricas instantaneamente, com uma experiência limpa e sem ruídos sonoros desnecessários.
 
 ---
 
@@ -103,8 +103,8 @@ Acesse no seu navegador: **[http://localhost:8080](http://localhost:8080)**
 
 1. Clique no botão circular de **Microfone** (🎙️).
 2. Diga: *"Recebi 5000 reais do meu salário hoje."*
-3. A IA transcreverá sua fala instantaneamente, chamará a ferramenta de registro e falará em voz alta a confirmação!
-4. O saldo e as métricas na tela serão atualizados automaticamente para R$ 5.000,00.
+3. A IA transcreverá sua fala instantaneamente via Whisper, chamará a ferramenta de registro no banco e exibirá a confirmação na tela!
+4. O saldo, a tabela de transações e os gráficos analíticos na tela serão atualizados automaticamente para R$ 5.000,00.
 5. Em seguida, clique no microfone e diga: *"Gastei 150 reais no supermercado comprando mantimentos. Quanto me resta de saldo?"*
 6. A IA responderá usando o contexto da memória e informará seu novo saldo de R$ 4.850,00!
 
@@ -143,3 +143,35 @@ curl -X POST "http://localhost:8080/api/v1/assistant/chat" \
 * **Experiência de Voz Fluida (Voice UX):** Como eliminar o atrito de arquivos de áudio manuais, integrando captura e síntese de voz nativas em tempo real no frontend com backend Spring AI.
 * **Persistência de Memória de Chat:** Como desacoplar o armazenamento de contexto da memória volátil (RAM), implementando `ChatMemoryRepository` com Spring Data JPA para persistência durável no MySQL.
 * **Tool Calling na Prática:** O LLM atua como um planejador e orquestrador de chamadas, enquanto o código determinístico em Java executa as validações, cálculos e regras de banco.
+
+---
+
+## 7. Roadmap e Possíveis Melhorias Futuras
+
+O projeto foi construído sobre uma base sólida de **Clean Architecture**, permitindo evoluções modulares sem acoplamento. Abaixo estão as principais melhorias mapeadas para futuras versões:
+
+### ⏳ 1. Dimensão Temporal e Inteligência Cronológica (Foco Prioritário)
+* **Filtros e Consultas por Período em Linguagem Natural:**
+  * Capacidade da IA compreender e filtrar períodos temporais automaticamente (*"Quanto gastei com alimentação no mês passado?"*, *"Qual foi meu saldo em outubro?"*, *"Compare os gastos desta semana com a anterior"*).
+* **Lançamentos Retroativos e Agendamento Futuro:**
+  * Suporte a datas customizadas na fala/texto (*"Paguei o condomínio no dia 05"* ou *"Agende o pagamento da internet para o dia 20"*).
+* **Gráficos de Linha Temporal (Time-Series Analytics):**
+  * Adicionar ao dashboard um gráfico de linha interativo exibindo a evolução diária do saldo e a trajetória de gastos ao longo dos meses.
+* **Transações Recorrentes e Compras Parceladas:**
+  * Gestão de despesas e receitas fixas automáticas (salário mensal, assinaturas de streaming, aluguel) e controle de parcelamentos (ex.: *12x no cartão de crédito com baixa mensal*).
+* **Orçamentos Mensais com Avisos Preventivos:**
+  * Definição de tetos mensais por categoria (*"Limitar gastos com restaurantes a R$ 600 neste mês"*), com a IA emitindo alertas quando o consumo atingir 80% da meta.
+* **Projeção de Saldo com IA:**
+  * Modelagem preditiva temporal estimando o saldo provável no encerramento do mês com base na média diária de consumo.
+
+### 🔐 2. Segurança e Multi-usuário (Multi-tenancy)
+* Implementação de autenticação e autorização via **Spring Security** com tokens **JWT**.
+* Isolamento completo de dados por usuário, permitindo múltiplos perfis financeiros (pessoal, familiar ou pequenos negócios).
+
+### 📄 3. Exportação e Conciliação Financeira
+* Exportação de relatórios analíticos periódicos em **PDF** e planilhas **CSV/Excel** para conciliação bancária e declaração de imposto de renda.
+* Importação inteligente de extratos via arquivo `.OFX` ou `.CSV` com categorização automatizada via IA.
+
+### 📲 4. Omnichannel e Notificações Externas
+* Integração do assistente com canais de mensageria como **Telegram Bot** ou **WhatsApp**, permitindo registrar despesas enviando um simples áudio de WhatsApp na hora da compra.
+
